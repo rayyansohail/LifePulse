@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifePulse - National Medical Logistics Command Center</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 15px rgba(225, 29, 72, 0.4); }
+            50% { box-shadow: 0 0 30px rgba(225, 29, 72, 0.8); }
+        }
+        .critical-pulse { animation: pulse-glow 2s infinite; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen selection:bg-rose-500 selection:text-white">
+    <!-- Top Navbar -->
+    <header class="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-gradient-to-tr from-rose-600 to-pink-500 text-white p-2.5 rounded-2xl shadow-lg shadow-rose-900/50 animate-bounce">
+                    <i class="fa-solid fa-heart-pulse text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-black tracking-wider text-white">LIFE<span class="text-rose-500">PULSE</span> <span class="text-xs px-2 py-0.5 bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-full font-mono ml-2">v2.4 Live</span></h1>
+                    <p class="text-xs text-slate-400 font-medium">Nationwide Healthcare Resource & Emergency Logistics Grid</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="hidden md:flex items-center space-x-2 px-3 py-1.5 bg-slate-800/80 border border-slate-700/60 rounded-xl text-xs text-slate-300">
+                    <i class="fa-solid fa-database text-rose-500"></i>
+                    <span>PostgreSQL Master-Replica Cluster</span>
+                </div>
+                <span class="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-inner">
+                    <span class="w-2 h-2 mr-2 bg-emerald-500 rounded-full animate-ping"></span> Live Sync Active
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-6 py-8 space-y-8">
+        <!-- Stat Cards Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div onclick="resetFilter()" class="bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-800 hover:border-blue-500/50 rounded-2xl p-6 shadow-xl cursor-pointer transition-all duration-300 hover:scale-[1.03] group">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-blue-400 transition-colors">Total Facilities</p>
+                        <h3 class="text-3xl font-black text-white mt-2" id="total-hospitals">0</h3>
+                    </div>
+                    <div class="p-3 bg-blue-500/10 text-blue-400 rounded-2xl group-hover:bg-blue-500/20 transition-colors"><i class="fa-solid fa-hospital text-xl"></i></div>
+                </div>
+                <div class="mt-4 flex items-center text-xs text-blue-400 font-medium"><span>Click to show all nodes</span> <i class="fa-solid fa-arrow-right ml-1 opacity-0 group-hover:opacity-100 transition-opacity"></i></div>
+            </div>
+
+            <div onclick="filterByStatus('Stable')" class="bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-800 hover:border-emerald-500/50 rounded-2xl p-6 shadow-xl cursor-pointer transition-all duration-300 hover:scale-[1.03] group">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-emerald-400 transition-colors">Stable Nodes</p>
+                        <h3 class="text-3xl font-black text-emerald-400 mt-2" id="stable-count">0</h3>
+                    </div>
+                    <div class="p-3 bg-emerald-500/10 text-emerald-400 rounded-2xl group-hover:bg-emerald-500/20 transition-colors"><i class="fa-solid fa-shield-heart text-xl"></i></div>
+                </div>
+                <div class="mt-4 flex items-center text-xs text-emerald-400 font-medium"><span>Click to filter stable</span> <i class="fa-solid fa-arrow-right ml-1 opacity-0 group-hover:opacity-100 transition-opacity"></i></div>
+            </div>
+
+            <div onclick="filterByStatus('Moderate')" class="bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-800 hover:border-amber-500/50 rounded-2xl p-6 shadow-xl cursor-pointer transition-all duration-300 hover:scale-[1.03] group">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-amber-400 transition-colors">Moderate Reserves</p>
+                        <h3 class="text-3xl font-black text-amber-400 mt-2" id="moderate-count">0</h3>
+                    </div>
+                    <div class="p-3 bg-amber-500/10 text-amber-400 rounded-2xl group-hover:bg-amber-500/20 transition-colors"><i class="fa-solid fa-circle-exclamation text-xl"></i></div>
+                </div>
+                <div class="mt-4 flex items-center text-xs text-amber-400 font-medium"><span>Click to filter moderate</span> <i class="fa-solid fa-arrow-right ml-1 opacity-0 group-hover:opacity-100 transition-opacity"></i></div>
+            </div>
+
+            <div onclick="filterByStatus('Critical')" class="bg-gradient-to-br from-slate-900 to-slate-800 border border-rose-500/40 hover:border-rose-500 rounded-2xl p-6 shadow-xl cursor-pointer transition-all duration-300 hover:scale-[1.03] group critical-pulse">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-wider text-rose-400">Critical Emergencies</p>
+                        <h3 class="text-3xl font-black text-rose-500 mt-2" id="critical-count">0</h3>
+                    </div>
+                    <div class="p-3 bg-rose-500/20 text-rose-400 rounded-2xl group-hover:bg-rose-500/30 transition-colors"><i class="fa-solid fa-triangle-exclamation text-xl"></i></div>
+                </div>
+                <div class="mt-4 flex items-center text-xs text-rose-400 font-bold underline"><span>Click to inspect emergencies</span></div>
+            </div>
+        </div>
+
+        <!-- Inventory Directory Section -->
+        <div class="bg-slate-900/90 backdrop-blur-md border border-slate-800 rounded-3xl shadow-2xl overflow-hidden">
+            <div class="p-6 md:p-8 border-b border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div>
+                    <h2 class="text-xl font-black text-white flex items-center space-x-2">
+                        <i class="fa-solid fa-network-wired text-rose-500"></i>
+                        <span>Nationwide Hospital Resource Directory</span>
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-1">Real-time telemetry across 30 regional medical centers in Pakistan</p>
+                </div>
+                <div class="flex items-center space-x-3 w-full md:w-auto">
+                    <button onclick="resetFilter()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold rounded-xl text-slate-200 transition-all shadow-md">Reset View</button>
+                    <div class="w-full md:w-80">
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                                <i class="fa-solid fa-search"></i>
+                            </span>
+                            <input type="text" id="search-input" onkeyup="filterTable()" placeholder="Search hospital, city, region..." class="w-full bg-slate-950 border border-slate-700/80 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-rose-500 transition-colors shadow-inner">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse" id="inventory-table">
+                    <thead>
+                        <tr class="bg-slate-950/60 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-800 font-mono">
+                            <th class="py-4 px-6">ID</th>
+                            <th class="py-4 px-6">Hospital Name</th>
+                            <th class="py-4 px-6">City</th>
+                            <th class="py-4 px-6">Beds</th>
+                            <th class="py-4 px-6">ICU</th>
+                            <th class="py-4 px-6">Vents</th>
+                            <th class="py-4 px-6">Oxy Cyl</th>
+                            <th class="py-4 px-6">O-Neg Blood</th>
+                            <th class="py-4 px-6">Masks</th>
+                            <th class="py-4 px-6">Status</th>
+                            <th class="py-4 px-6 text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-800/60 text-sm">
+                        {% for row in inventory %}
+                        <tr class="hover:bg-slate-800/50 transition-all duration-200 group" data-status="{{ row[10] }}" data-name="{{ row[1] }}" data-city="{{ row[3] }}" data-region="{{ row[2] }}" data-beds="{{ row[4] }}" data-icu="{{ row[5] }}" data-vents="{{ row[6] }}" data-oxy="{{ row[7] }}" data-blood="{{ row[8] }}" data-masks="{{ row[9] }}">
+                            <td class="py-4 px-6 font-mono text-slate-500 group-hover:text-slate-300">#{{ row[0] }}</td>
+                            <td class="py-4 px-6 font-bold text-white">
+                                <div class="flex items-center space-x-2.5">
+                                    <div class="p-1.5 bg-rose-500/10 text-rose-500 rounded-lg"><i class="fa-solid fa-hospital text-xs"></i></div>
+                                    <span>{{ row[1] }}</span>
+                                </div>
+                            </td>
+                            <td class="py-4 px-6 text-slate-300 font-medium">{{ row[3] }}</td>
+                            <td class="py-4 px-6 font-extrabold text-indigo-400">{{ row[4] }}</td>
+                            <td class="py-4 px-6 font-extrabold text-blue-400">{{ row[5] }}</td>
+                            <td class="py-4 px-6 font-extrabold text-teal-400">{{ row[6] }}</td>
+                            <td class="py-4 px-6 font-extrabold text-cyan-400">{{ row[7] }}</td>
+                            <td class="py-4 px-6 font-extrabold text-rose-400">{{ row[8] }}</td>
+                            <td class="py-4 px-6 text-slate-300 font-mono">{{ row[9] }}</td>
+                            <td class="py-4 px-6">
+                                {% if row[10] == 'Critical' %}
+                                <span class="px-3 py-1 bg-rose-500/20 text-rose-400 border border-rose-500/40 rounded-full text-xs font-extrabold inline-flex items-center shadow-lg shadow-rose-900/30">
+                                    <span class="w-2 h-2 mr-1.5 bg-rose-500 rounded-full animate-ping"></span> Critical
+                                </span>
+                                {% elif row[10] == 'Moderate' %}
+                                <span class="px-3 py-1 bg-amber-500/20 text-amber-400 border border-amber-500/40 rounded-full text-xs font-extrabold inline-flex items-center">
+                                    <span class="w-2 h-2 mr-1.5 bg-amber-500 rounded-full"></span> Moderate
+                                </span>
+                                {% else %}
+                                <span class="px-3 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 rounded-full text-xs font-extrabold inline-flex items-center">
+                                    <span class="w-2 h-2 mr-1.5 bg-emerald-500 rounded-full"></span> Stable
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="py-4 px-6 text-center">
+                                <button onclick="openLogisticsModal(this)" class="px-3.5 py-2 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-rose-900/40 transition-all hover:scale-105 flex items-center justify-center space-x-1.5 mx-auto">
+                                    <i class="fa-solid fa-route text-xs"></i>
+                                    <span>Dispatch</span>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Animated Logistics Modal -->
+    <div id="logistics-modal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md hidden items-center justify-center z-50 p-4 transition-all duration-300">
+        <div class="bg-slate-900 border border-slate-700/80 rounded-3xl max-w-lg w-full p-8 shadow-2xl space-y-6 relative transform transition-all scale-95 animate-in fade-in zoom-in duration-200">
+            <button onclick="closeModal()" class="absolute top-6 right-6 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 p-2.5 rounded-2xl transition-colors">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <div class="flex items-center space-x-4">
+                <div id="modal-icon-bg" class="p-3.5 rounded-2xl text-white shadow-xl">
+                    <i id="modal-icon" class="fa-solid fa-triangle-exclamation text-2xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-black text-white" id="modal-hospital-name">Hospital Name</h3>
+                    <p class="text-xs text-slate-400 font-medium mt-0.5" id="modal-location">City, Pakistan</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3">
+                <div class="bg-slate-950/80 border border-slate-800 p-3.5 rounded-2xl shadow-inner">
+                    <p class="text-[10px] text-slate-400 uppercase font-mono font-bold tracking-wider">Beds / ICU</p>
+                    <p class="text-sm font-black text-indigo-400 mt-1" id="modal-beds">0</p>
+                </div>
+                <div class="bg-slate-950/80 border border-slate-800 p-3.5 rounded-2xl shadow-inner">
+                    <p class="text-[10px] text-slate-400 uppercase font-mono font-bold tracking-wider">Ventilators</p>
+                    <p class="text-sm font-black text-teal-400 mt-1" id="modal-vents">0</p>
+                </div>
+                <div class="bg-slate-950/80 border border-slate-800 p-3.5 rounded-2xl shadow-inner">
+                    <p class="text-[10px] text-slate-400 uppercase font-mono font-bold tracking-wider">Oxy Cylinders</p>
+                    <p class="text-sm font-black text-cyan-400 mt-1" id="modal-oxy">0</p>
+                </div>
+            </div>
+
+            <div class="space-y-2 bg-slate-950/90 border border-slate-800 p-4.5 rounded-2xl">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center space-x-2 font-mono">
+                    <i class="fa-solid fa-boxes-packing text-rose-500"></i>
+                    <span>Required Emergency Supplies & Deficit</span>
+                </h4>
+                <p class="text-xs text-slate-300 leading-relaxed font-medium" id="modal-supplies-text">Analyzing resource deficit...</p>
+            </div>
+
+            <div class="space-y-2 bg-slate-950/90 border border-slate-800 p-4.5 rounded-2xl">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center space-x-2 font-mono">
+                    <i class="fa-solid fa-truck-fast text-emerald-500"></i>
+                    <span>Nearest Hub Routing & Logistics Corridor</span>
+                </h4>
+                <p class="text-xs text-emerald-400 font-medium leading-relaxed" id="modal-routing-text">Calculating optimal corridor...</p>
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-2">
+                <button onclick="closeModal()" class="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-xs font-bold rounded-2xl text-slate-200 transition-colors">Close</button>
+                <button onclick="confirmDispatch()" class="px-6 py-3 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-xs font-bold rounded-2xl text-white shadow-xl shadow-rose-900/50 transition-all hover:scale-105 flex items-center space-x-2">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <span>Confirm Convoy Dispatch</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            const rows = document.querySelectorAll('#inventory-table tbody tr');
+            let stableCount = 0;
+            let moderateCount = 0;
+            let criticalCount = 0;
+
+            rows.forEach(row => {
+                const status = row.getAttribute('data-status');
+                if(status === 'Stable') stableCount++;
+                if(status === 'Moderate') moderateCount++;
+                if(status === 'Critical') criticalCount++;
+            });
+
+            document.getElementById('total-hospitals').innerText = rows.length;
+            document.getElementById('stable-count').innerText = stableCount;
+            document.getElementById('moderate-count').innerText = moderateCount;
+            document.getElementById('critical-count').innerText = criticalCount;
+        });
+
+        function filterTable() {
+            const input = document.getElementById('search-input').value.toLowerCase();
+            const rows = document.querySelectorAll('#inventory-table tbody tr');
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(input) ? "" : "none";
+            });
+        }
+
+        function filterByStatus(targetStatus) {
+            const rows = document.querySelectorAll('#inventory-table tbody tr');
+            rows.forEach(row => {
+                const status = row.getAttribute('data-status');
+                row.style.display = (status === targetStatus) ? "" : "none";
+            });
+        }
+
+        function resetFilter() {
+            document.getElementById('search-input').value = "";
+            const rows = document.querySelectorAll('#inventory-table tbody tr');
+            rows.forEach(row => row.style.display = "");
+        }
+
+        function openLogisticsModal(button) {
+            const row = button.closest('tr');
+            const name = row.getAttribute('data-name');
+            const city = row.getAttribute('data-city');
+            const region = row.getAttribute('data-region');
+            const beds = row.getAttribute('data-beds');
+            const icu = row.getAttribute('data-icu');
+            const vents = row.getAttribute('data-vents');
+            const oxy = row.getAttribute('data-oxy');
+            const blood = row.getAttribute('data-blood');
+            const masks = row.getAttribute('data-masks');
+            const status = row.getAttribute('data-status');
+
+            document.getElementById('modal-hospital-name').innerText = name;
+            document.getElementById('modal-location').innerText = city + ", " + region + " — Telemetry Status: " + status;
+            document.getElementById('modal-beds').innerText = beds + " Beds (" + icu + " ICU)";
+            document.getElementById('modal-vents').innerText = vents + " Units";
+            document.getElementById('modal-oxy').innerText = oxy + " Cylinders";
+
+            const iconBg = document.getElementById('modal-icon-bg');
+            const icon = document.getElementById('modal-icon');
+            const suppliesText = document.getElementById('modal-supplies-text');
+            const routingText = document.getElementById('modal-routing-text');
+
+            if(status === 'Critical') {
+                iconBg.className = "p-3.5 rounded-2xl text-white bg-gradient-to-tr from-rose-600 to-pink-600 shadow-xl shadow-rose-900/60 animate-pulse";
+                icon.className = "fa-solid fa-triangle-exclamation text-2xl";
+                suppliesText.innerHTML = `<span class="text-rose-400 font-bold">EMERGENCY DEFICIT:</span> Critical supply shortage detected. Immediate convoy dispatch required for <strong>${35 - parseInt(blood)}x O-Negative blood units</strong>, <strong>${10 - parseInt(vents)}x emergency ventilators</strong>, and <strong>${60 - parseInt(oxy)}x oxygen cylinders</strong>.`;
+                routingText.innerHTML = `Nearest Regional Hub: <strong>Primary Medical Reserve Corridor</strong><br>Estimated Emergency Transit: <strong>12-18 minutes</strong> via priority ambulance lane.`;
+            } else if(status === 'Moderate') {
+                iconBg.className = "p-3.5 rounded-2xl text-white bg-gradient-to-tr from-amber-600 to-yellow-600 shadow-xl shadow-amber-900/60";
+                icon.className = "fa-solid fa-circle-exclamation text-2xl";
+                suppliesText.innerHTML = `<span class="text-amber-400 font-bold">WARNING:</span> Resource margins declining. Recommended restock of <strong>15x oxygen cylinders</strong>, <strong>5x ICU monitors</strong>, and <strong>${masks} surgical masks</strong> within 24 hours.`;
+                routingText.innerHTML = `Nearest Regional Hub: District medical logistics warehouse. Scheduled restock via nightly replica synchronization.`;
+            } else {
+                iconBg.className = "p-3 rounded-2xl text-white bg-gradient-to-tr from-emerald-600 to-teal-600 shadow-xl shadow-emerald-900/60";
+                icon.className = "fa-solid fa-shield-heart text-2xl";
+                suppliesText.innerHTML = `<span class="text-emerald-400 font-bold">OPTIMAL:</span> Facility supplies are fully stable. Operating as a primary regional surplus donor node.`;
+                routingText.innerHTML = `Hub Status: Fully synchronized across master-replica cluster. Ready to dispatch surplus supplies.`;
+            }
+
+            document.getElementById('logistics-modal').classList.remove('hidden');
+            document.getElementById('logistics-modal').classList.add('flex');
+        }
+
+        function closeModal() {
+            document.getElementById('logistics-modal').classList.remove('flex');
+            document.getElementById('logistics-modal').classList.add('hidden');
+        }
+
+        function confirmDispatch() {
+            alert('Emergency supply convoy and ventilator dispatch order successfully broadcasted and logged to PostgreSQL master node!');
+            closeModal();
+        }
+    </script>
+</body>
+</html>

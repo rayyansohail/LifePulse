@@ -1,0 +1,61 @@
+import psycopg2
+
+print("Connecting to database and populating 30 hospitals...")
+conn = psycopg2.connect(host="localhost", database="lifepulse_khi", user="postgres", password="admin")
+conn.autocommit = True
+cur = conn.cursor()
+
+cur.execute("DROP TABLE IF EXISTS hospital_inventory;")
+cur.execute("""
+CREATE TABLE hospital_inventory (
+    hospital_id INT PRIMARY KEY,
+    hospital_name VARCHAR(255) NOT NULL,
+    region VARCHAR(10) NOT NULL,
+    city VARCHAR(50) NOT NULL,
+    available_beds INT NOT NULL,
+    icu_beds INT NOT NULL,
+    ventilators INT NOT NULL,
+    oxygen_cylinders INT NOT NULL,
+    blood_units_o_neg INT NOT NULL,
+    surgical_masks INT NOT NULL,
+    status VARCHAR(50) NOT NULL
+);
+""")
+
+hospitals = [
+    (101, 'Jinnah Hospital', 'Sindh', 'Karachi', 5, 2, 1, 10, 20, 500, 'Critical'),
+    (102, 'Aga Khan University Hospital', 'Sindh', 'Karachi', 45, 18, 12, 120, 85, 3000, 'Stable'),
+    (103, 'Civil Hospital', 'Sindh', 'Karachi', 8, 3, 2, 15, 12, 800, 'Critical'),
+    (104, 'Liaquat National Hospital', 'Sindh', 'Karachi', 30, 10, 8, 90, 50, 2500, 'Stable'),
+    (105, 'Indus Hospital', 'Sindh', 'Karachi', 25, 8, 6, 75, 40, 2000, 'Stable'),
+    (106, 'Ziauddin Hospital', 'Sindh', 'Karachi', 14, 4, 3, 30, 22, 1200, 'Moderate'),
+    (107, 'Liaquat University Hospital', 'Sindh', 'Hyderabad', 10, 2, 1, 18, 15, 900, 'Moderate'),
+    (201, 'Mayo Hospital', 'Punjab', 'Lahore', 12, 4, 2, 25, 35, 1500, 'Moderate'),
+    (202, 'Services Hospital', 'Punjab', 'Lahore', 22, 7, 5, 60, 45, 1800, 'Stable'),
+    (203, 'Shaukat Khanum Memorial Hospital', 'Punjab', 'Lahore', 50, 20, 15, 150, 95, 5000, 'Stable'),
+    (204, 'Jinnah Hospital Lahore', 'Punjab', 'Lahore', 7, 2, 1, 12, 10, 600, 'Critical'),
+    (205, 'General Hospital', 'Punjab', 'Lahore', 16, 5, 4, 40, 28, 1100, 'Moderate'),
+    (206, 'Sir Ganga Ram Hospital', 'Punjab', 'Lahore', 19, 6, 4, 50, 32, 1400, 'Stable'),
+    (207, 'Allied Hospital', 'Punjab', 'Faisalabad', 15, 4, 3, 35, 25, 1300, 'Moderate'),
+    (208, 'DHQ Hospital Faisalabad', 'Punjab', 'Faisalabad', 9, 2, 1, 14, 18, 700, 'Critical'),
+    (209, 'Nishtar Hospital', 'Punjab', 'Multan', 11, 3, 2, 20, 22, 950, 'Moderate'),
+    (210, 'Chaudhry Pervaiz Elahi Institute of Cardiology', 'Punjab', 'Multan', 28, 12, 9, 80, 50, 2200, 'Stable'),
+    (301, 'Pakistan Institute of Medical Sciences (PIMS)', 'ICT', 'Islamabad', 25, 9, 7, 85, 60, 2400, 'Stable'),
+    (302, 'Shifa International Hospital', 'ICT', 'Islamabad', 40, 15, 11, 110, 70, 3500, 'Stable'),
+    (303, 'Federal Government Polyclinic', 'ICT', 'Islamabad', 13, 3, 2, 22, 20, 1000, 'Moderate'),
+    (304, 'Holy Family Hospital', 'Punjab', 'Rawalpindi', 17, 5, 3, 45, 28, 1250, 'Moderate'),
+    (305, 'Benazir Bhutto Hospital', 'Punjab', 'Rawalpindi', 6, 1, 1, 10, 12, 500, 'Critical'),
+    (306, 'CMH Rawalpindi', 'Punjab', 'Rawalpindi', 60, 25, 20, 200, 120, 6000, 'Stable'),
+    (401, 'Hayatabad Medical Complex', 'KPK', 'Peshawar', 20, 6, 5, 55, 38, 1600, 'Stable'),
+    (402, 'Lady Reading Hospital', 'KPK', 'Peshawar', 9, 2, 1, 16, 15, 750, 'Critical'),
+    (403, 'Khyber Teaching Hospital', 'KPK', 'Peshawar', 15, 4, 3, 30, 24, 1150, 'Moderate'),
+    (501, 'Civil Hospital Quetta', 'Balochistan', 'Quetta', 7, 2, 1, 12, 10, 600, 'Critical'),
+    (502, 'Bolan Medical Complex', 'Balochistan', 'Quetta', 14, 4, 2, 28, 20, 900, 'Moderate'),
+    (601, 'DHQ Hospital Muzaffarabad', 'AJK', 'Muzaffarabad', 12, 3, 2, 25, 18, 850, 'Moderate'),
+    (701, 'DHQ Hospital Gilgit', 'GB', 'Gilgit', 10, 2, 1, 20, 15, 700, 'Stable')
+]
+
+cur.executemany("INSERT INTO hospital_inventory VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", hospitals)
+cur.close()
+conn.close()
+print("Success! 30 hospitals loaded into PostgreSQL.")
