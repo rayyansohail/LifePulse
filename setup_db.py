@@ -1,16 +1,18 @@
+
 import psycopg2
 
-print("Connecting to database and populating 30 hospitals...")
+print("Setting up PostgreSQL tables (Hospitals & Users)...")
 conn = psycopg2.connect(host="localhost", database="lifepulse_khi", user="postgres", password="admin")
 conn.autocommit = True
 cur = conn.cursor()
 
+# Drop and recreate hospital inventory
 cur.execute("DROP TABLE IF EXISTS hospital_inventory;")
 cur.execute("""
 CREATE TABLE hospital_inventory (
     hospital_id INT PRIMARY KEY,
     hospital_name VARCHAR(255) NOT NULL,
-    region VARCHAR(10) NOT NULL,
+    region VARCHAR(50) NOT NULL,
     city VARCHAR(50) NOT NULL,
     available_beds INT NOT NULL,
     icu_beds INT NOT NULL,
@@ -19,6 +21,18 @@ CREATE TABLE hospital_inventory (
     blood_units_o_neg INT NOT NULL,
     surgical_masks INT NOT NULL,
     status VARCHAR(50) NOT NULL
+);
+""")
+
+# Create users table for Signup/Login
+cur.execute("DROP TABLE IF EXISTS users;")
+cur.execute("""
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(100) UNIQUE NOT NULL,
+    email VARCHAR(150) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    role VARCHAR(50) DEFAULT 'Medical Officer'
 );
 """)
 
@@ -58,4 +72,5 @@ hospitals = [
 cur.executemany("INSERT INTO hospital_inventory VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", hospitals)
 cur.close()
 conn.close()
-print("Success! 30 hospitals loaded into PostgreSQL.")
+print("PostgreSQL database setup complete with users & hospital tables!")
+
