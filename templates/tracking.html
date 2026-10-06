@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifePulse - Emergency Fleet Tracking</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body class="bg-slate-900 text-white h-screen flex flex-col overflow-hidden">
+    
+    <!-- Header -->
+    <div class="p-4 bg-slate-950 flex justify-between items-center shadow-md z-10 border-b border-slate-800">
+        <div>
+            <h1 class="text-2xl font-bold text-emerald-400">LifePulse Emergency Dispatch Network</h1>
+            <p class="text-xs text-slate-400">Inter-Hospital Inventory Transfer & Live GPS Tracking</p>
+        </div>
+        <a href="/" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg font-bold text-sm transition">Back to Dashboard</a>
+    </div>
+
+    <!-- Main Workspace -->
+    <div class="flex flex-grow overflow-hidden relative">
+        
+        <!-- Left Sidebar -->
+        <div class="w-96 bg-slate-950 p-6 border-r border-slate-800 flex flex-col gap-6 overflow-y-auto z-10">
+            <div>
+                <h2 class="text-lg font-bold text-red-400 mb-1">🚨 Emergency Request Portal</h2>
+                <p class="text-xs text-slate-400">Select critical supplies to auto-route from the nearest available hospital hub.</p>
+            </div>
+
+            <div class="flex flex-col gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Select Critical Supply:</label>
+                    <select id="supplyItem" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+                        <option value="Blood (O-Negative Units)">O-Negative Blood Units (x5)</option>
+                        <option value="Oxygen Cylinders">Emergency Oxygen Cylinders (x10)</option>
+                        <option value="Trauma Surgical Kits">Trauma Surgical Kits (x3)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Requesting Ward / Hospital:</label>
+                    <select id="targetHospital" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+                        <option value="Aga Khan University Hospital">Aga Khan University Hospital (ER)</option>
+                        <option value="Civil Hospital Karachi">Civil Hospital Karachi (Trauma Center)</option>
+                        <option value="Jinnah Postgraduate Medical Centre">Jinnah Postgraduate Medical Centre (ICU)</option>
+                    </select>
+                </div>
+
+                <button onclick="dispatchEmergency()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg shadow-lg transition duration-200 text-sm mt-2">
+                    Dispatch from Nearest Hub 🚚
+                </button>
+            </div>
+
+            <div class="mt-auto bg-slate-900 p-4 rounded-lg border border-slate-800">
+                <h3 class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2">Live Dispatch Status</h3>
+                <p id="dispatchStatus" class="text-xs text-slate-300">System idle. Ready for emergency routing instruction.</p>
+            </div>
+        </div>
+
+        <!-- Right Side Map Container -->
+        <div class="flex-grow relative h-full">
+            <div id="map" class="absolute inset-0 z-0"></div>
+        </div>
+
+    </div>
+
+    <script>
+        // Initialize Map centered on Karachi
+        var map = L.map('map').setView([24.8607, 67.0011], 13);
+        
+        // Use ESRI World Street Map (Guaranteed 100% free, no 403 blocks, ultra reliable)
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 19,
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, and the GIS User Community'
+        }).addTo(map);
+
+        setTimeout(function() { map.invalidateSize(); }, 200);
+
+        // Hospital Hubs
+        var hubs = {
+            "Aga Khan University Hospital": {lat: 24.8900, lng: 67.0700, name: "Aga Khan University Hospital"},
+            "Civil Hospital Karachi": {lat: 24.8550, lng: 67.0250, name: "Civil Hospital Karachi"},
+            "Jinnah Postgraduate Medical Centre": {lat: 24.8500, lng: 67.0480, name: "Jinnah Postgraduate Medical Centre"}
+        };
+
+        for (var key in hubs) {
+            L.marker([hubs[key].lat, hubs[key].lng])
+             .addTo(map)
+             .bindPopup(`<b>${hubs[key].name}</b><br><span class="text-xs text-emerald-600 font-semibold">Inventory Status: Active Hub</span>`);
+        }
+
+        let activeTruckMarker = null;
+        let animationInterval = null;
+
+        function dispatchEmergency() {
+            let supply = document.getElementById('supplyItem').value;
+            let hospitalName = document.getElementById('targetHospital').value;
+            let targetCoords = [hubs[hospitalName].lat, hubs[hospitalName].lng];
+            let startCoords = [24.8750, 67.0450]; // Saifee Hub Origin
+
+            document.getElementById('dispatchStatus').innerHTML = `<b class="text-emerald-400">DISPATCHED:</b> ${supply} en route to ${hospitalName}.`;
+
+            if (activeTruckMarker) {
+                map.removeLayer(activeTruckMarker);
+                clearInterval(animationInterval);
+            }
+
+            var truckIcon = L.divIcon({
+                className: 'custom-truck',
+                html: `<div style="background-color: #ef4444; color: white; padding: 5px 8px; border-radius: 6px; font-weight: bold; font-size: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.4); border: 2px solid white;">🚨 EMS Unit</div>`,
+                iconSize: [80, 25]
+            });
+
+            activeTruckMarker = L.marker(startCoords, {icon: truckIcon}).addTo(map);
+            activeTruckMarker.bindPopup(`<b>Emergency Transport</b><br>Carrying: ${supply}<br>Destination: ${hospitalName}`).openPopup();
+
+            let steps = 40;
+            let currentStep = 0;
+            let latStep = (targetCoords[0] - startCoords[0]) / steps;
+            let lngStep = (targetCoords[1] - startCoords[1]) / steps;
+
+            animationInterval = setInterval(function() {
+                if (currentStep < steps) {
+                    let newLat = startCoords[0] + (latStep * currentStep);
+                    let newLng = startCoords[1] + (lngStep * currentStep);
+                    activeTruckMarker.setLatLng([newLat, newLng]);
+                    currentStep++;
+                } else {
+                    clearInterval(animationInterval);
+                    document.getElementById('dispatchStatus').innerHTML = `<b class="text-green-400">DELIVERED:</b> ${supply} arrived at ${hospitalName}.`;
+                }
+            }, 200);
+        }
+    </script>
+</body>
+</html>

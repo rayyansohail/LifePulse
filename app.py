@@ -78,8 +78,10 @@ def dashboard():
 def logout():
     session.clear()
     return redirect(url_for('login'))
- 
-    
+
+@app.route('/tracking')
+def tracking():
+    return render_template('tracking.html')
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
-EOF
